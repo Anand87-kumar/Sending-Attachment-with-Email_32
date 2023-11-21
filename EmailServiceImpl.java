@@ -1,0 +1,45 @@
+package com.anand.serviceImpl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import jakarta.mail.internet.MimeMessage;
+
+
+import com.anand.service.EmailService;
+
+@Service
+public class EmailServiceImpl implements EmailService {
+
+    @Value("${spring.mail.username}")
+    private String fromEmail;
+
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @Override
+    public String sendEmail(String to, String[] cc, String subject, String body, MultipartFile[] files) {
+        try {
+            MimeMessage mimeMessage = javaMailSender.createMimeMessage();
+            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, true);
+            mimeMessageHelper.setFrom(fromEmail);
+            mimeMessageHelper.setTo(to);
+            mimeMessageHelper.setCc(cc);
+            mimeMessageHelper.setSubject(subject);
+            mimeMessageHelper.setText(body);
+
+            for (MultipartFile file : files) {
+                mimeMessageHelper.addAttachment(file.getOriginalFilename(), new ByteArrayResource(file.getBytes()));
+            }
+            javaMailSender.send(mimeMessage);
+
+            return "Send email with attachment pdf";
+    	}catch(Exception e) {
+    		throw new RuntimeException(e);
+    	}
+    }
+}
